@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" id="themeColorMeta" content="#F3F3F3">
+  <meta name="description" content="Planificador semanal digital interactivo con estética Windows 11 Fluent Design, feriados oficiales, huecos libres personalizables, deshacer/rehacer y soporte 100 % offline.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Planificador">
+  <title>Planificador Semanal — Fluent</title>
+
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230067C0'/%3E%3Crect x='12' y='16' width='40' height='36' rx='6' fill='%23FFFFFF' fill-opacity='0.96'/%3E%3Crect x='12' y='16' width='40' height='10' rx='6' fill='%23005A9E'/%3E%3Crect x='18' y='31' width='12' height='5' rx='2' fill='%230067C0'/%3E%3Crect x='34' y='31' width='12' height='5' rx='2' fill='%23008575'/%3E%3Crect x='18' y='40' width='18' height='5' rx='2' fill='%23CA5010'/%3E%3C/svg%3E">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230067C0'/%3E%3Crect x='12' y='16' width='40' height='36' rx='6' fill='%23FFFFFF' fill-opacity='0.96'/%3E%3Crect x='12' y='16' width='40' height='10' rx='6' fill='%23005A9E'/%3E%3Crect x='18' y='31' width='12' height='5' rx='2' fill='%230067C0'/%3E%3Crect x='34' y='31' width='12' height='5' rx='2' fill='%23008575'/%3E%3Crect x='18' y='40' width='18' height='5' rx='2' fill='%23CA5010'/%3E%3C/svg%3E">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" media="print" onload="this.media='all'">
+
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem('fluent_planner_state_v1');
+        var theme = null;
+        if (saved) {
+          var parsed = JSON.parse(saved);
+          if (parsed && parsed.settings) {
+            if (parsed.settings.theme === 'light' || parsed.settings.theme === 'dark') {
+              theme = parsed.settings.theme;
+            }
+            if (typeof parsed.settings.freeSlotColor === 'string' && /^#[0-9A-Fa-f]{6}$/.test(parsed.settings.freeSlotColor)) {
+              document.documentElement.style.setProperty('--free-slot-accent', parsed.settings.freeSlotColor);
+            }
+          }
+        }
+        if (!theme) {
+          theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', theme);
+        var meta = document.getElementById('themeColorMeta');
+        if (meta) meta.setAttribute('content', theme === 'dark' ? '#202020' : '#F3F3F3');
+      } catch (e) {}
+    })();
+  </script>
+
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Barra superior Acrylic -->
+    <header class="topbar">
+      <div class="topbar-group topbar-brand">
+        <div class="app-logo" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <rect x="2" y="3" width="16" height="14" rx="3" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M2 7.5H18" stroke="currentColor" stroke-width="1.6"/>
+            <rect x="5" y="10" width="4" height="2" rx="1" fill="currentColor"/>
+            <rect x="11" y="10" width="4" height="2" rx="1" fill="currentColor"/>
+            <rect x="5" y="13.5" width="7" height="2" rx="1" fill="currentColor"/>
+          </svg>
+        </div>
+        <div class="brand-titles">
+          <h1 class="app-title">Planificador</h1>
+          <span class="status-badge" id="netStatusBadge" title="Estado de disponibilidad offline">OFFLINE READY</span>
+        </div>
+      </div>
+
+      <!-- Navegación semanal -->
+      <div class="topbar-group topbar-nav" aria-label="Navegación semanal">
+        <div class="segmented-nav">
+          <button type="button" class="btn btn-icon" id="prevWeekBtn" title="Semana anterior" aria-label="Semana anterior">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 3.5L5.5 8L10 12.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button type="button" class="btn btn-subtle" id="todayBtn">Hoy</button>
+          <button type="button" class="btn btn-icon" id="nextWeekBtn" title="Semana siguiente" aria-label="Semana siguiente">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+
+        <div class="week-readout">
+          <span class="iso-pill mono" id="isoWeekBadge">2026-W01</span>
+          <span class="week-range-text" id="weekRangeText">29 dic – 4 ene 2026</span>
+        </div>
+
+        <label class="date-jump-wrap" title="Saltar a una fecha">
+          <input type="date" id="dateJumpInput" class="fluent-input date-jump-input" aria-label="Saltar a fecha">
+        </label>
+      </div>
+
+      <!-- Controles de jornada, huecos libres, feriados y acciones -->
+      <div class="topbar-group topbar-controls">
+        <div class="workday-control" title="Rango horario de la jornada laboral">
+          <span class="control-label">Jornada</span>
+          <select id="workStartSelect" class="fluent-select mono" aria-label="Hora de inicio de jornada"></select>
+          <span class="control-sep">–</span>
+          <select id="workEndSelect" class="fluent-select mono" aria-label="Hora de fin de jornada"></select>
+        </div>
+
+        <!-- Control de Huecos Libres + Color -->
+        <div class="control-pill-group">
+          <label class="fluent-checkbox-wrap" title="Mostrar espacios disponibles de 15 min o más">
+            <input type="checkbox" id="toggleFreeSlots" class="fluent-checkbox" checked>
+            <span>Huecos libres</span>
+          </label>
+          <button type="button" class="color-dot-btn" id="freeSlotColorBtn" title="Elegir color para los huecos libres" aria-label="Elegir color para los huecos libres" aria-expanded="false">
+            <span class="color-dot-preview" id="freeSlotColorDot"></span>
+          </button>
+        </div>
+
+        <!-- Control de Feriados Oficiales -->
+        <div class="control-pill-group">
+          <label class="fluent-checkbox-wrap" title="Mostrar u ocultar feriados y fechas festivas nacionales">
+            <input type="checkbox" id="toggleHolidays" class="fluent-checkbox" checked>
+            <span>Feriados</span>
+          </label>
+          <button type="button" class="country-pill-btn mono" id="holidayConfigBtn" title="Configurar país y actualizar feriados oficiales" aria-expanded="false">
+            <span id="holidayCountryBadge">AR</span>
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+
+        <!-- Deshacer / Rehacer -->
+        <div class="segmented-nav" role="group" aria-label="Historial de cambios">
+          <button type="button" class="btn btn-icon" id="undoBtn" title="Deshacer (Ctrl+Z)" aria-label="Deshacer" disabled>
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M5.5 3.5L2.5 6.5L5.5 9.5M3 6.5H10C12.2091 6.5 14 8.29086 14 10.5C14 12.7091 12.2091 14.5 10 14.5H7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button type="button" class="btn btn-icon" id="redoBtn" title="Rehacer (Ctrl+Y)" aria-label="Rehacer" disabled>
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M10.5 3.5L13.5 6.5L10.5 9.5M13 6.5H6C3.79086 6.5 2 8.29086 2 10.5C2 12.7091 3.79086 14.5 6 14.5H8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+
+        <button type="button" class="btn btn-accent" id="newTaskBtn">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <span>Nuevo bloque</span>
+        </button>
+      </div>
+
+      <!-- Utilidades, tema y respaldo -->
+      <div class="topbar-group topbar-utils">
+        <button type="button" class="btn btn-subtle" id="installPwaBtn" hidden title="Instalar aplicación">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M8 2.5V10.5M8 10.5L5 7.5M8 10.5L11 7.5M3 13.5H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Instalar</span>
+        </button>
+
+        <button type="button" class="btn btn-subtle" id="themeToggleBtn" title="Alternar tema claro u oscuro" aria-label="Cambiar tema">
+          <span id="themeIcon" class="btn-svg-wrap" aria-hidden="true"></span>
+          <span id="themeLabel">Claro</span>
+        </button>
+
+        <button type="button" class="btn btn-subtle" id="exportBtn" title="Exportar respaldo JSON">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M8 10.5V2.5M8 2.5L5 5.5M8 2.5L11 5.5M3 13.5H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Exportar</span>
+        </button>
+
+        <button type="button" class="btn btn-subtle" id="importBtn" title="Importar respaldo JSON">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M8 2.5V10.5M8 10.5L5 7.5M8 10.5L11 7.5M3 13.5H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Importar</span>
+        </button>
+        <input type="file" id="importFileInput" accept=".json,application/json" hidden>
+
+        <button type="button" class="btn btn-icon" id="sidebarToggleBtn" title="Alternar panel de objetivos y notas" aria-label="Alternar panel lateral" aria-expanded="true">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="2.5" width="12" height="11" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 2.5V13.5" stroke="currentColor" stroke-width="1.5"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Flyout Fluent 2: Color de Huecos Libres -->
+    <div class="fluent-flyout" id="freeSlotColorFlyout" role="dialog" aria-label="Color de huecos libres" hidden>
+      <div class="flyout-header">
+        <span class="flyout-title">Color de huecos libres</span>
+        <span class="hex-readout mono" id="freeSlotHexReadout">#008575</span>
+      </div>
+      <div class="color-picker-row">
+        <div class="swatch-list" id="freeSlotSwatches" role="radiogroup" aria-label="Paleta Fluent para huecos libres"></div>
+        <label class="custom-color-btn" title="Elegir color personalizado">
+          <input type="color" id="freeSlotCustomColorInput" value="#008575" aria-label="Color personalizado para huecos libres">
+          <span>Libre</span>
+        </label>
+      </div>
+      <div class="flyout-footer">
+        <button type="button" class="btn btn-subtle btn-sm" id="resetFreeSlotColorBtn">Predeterminado</button>
+      </div>
+    </div>
+
+    <!-- Flyout Fluent 2: Feriados y Fechas Festivas Nacionales -->
+    <div class="fluent-flyout fluent-flyout-wide" id="holidayFlyout" role="dialog" aria-label="Feriados nacionales oficiales" hidden>
+      <div class="flyout-header">
+        <span class="flyout-title">Feriados y fechas festivas</span>
+        <span class="iso-pill mono" id="holidayYearBadge">2026</span>
+      </div>
+      <div class="form-field">
+        <label for="holidayCountrySelect" class="field-label">País (datos oficiales)</label>
+        <select id="holidayCountrySelect" class="fluent-select">
+          <option value="AR">Argentina (AR)</option>
+          <option value="UY">Uruguay (UY)</option>
+          <option value="CL">Chile (CL)</option>
+          <option value="BR">Brasil (BR)</option>
+          <option value="CO">Colombia (CO)</option>
+          <option value="MX">México (MX)</option>
+          <option value="PE">Perú (PE)</option>
+          <option value="ES">España (ES)</option>
+          <option value="US">Estados Unidos (US)</option>
+        </select>
+      </div>
+      <div class="holiday-sync-status" id="holidaySyncStatus">Sin sincronizar</div>
+      <div class="flyout-footer">
+        <button type="button" class="btn btn-accent btn-sm" id="syncHolidaysBtn">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M13.5 8A5.5 5.5 0 1 1 11.8 4M13.5 2.5V5.5H10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Actualizar datos oficiales</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Barra de métricas semanales -->
+    <section class="metrics-bar" aria-label="Métricas de la semana">
+      <div class="metrics-items">
+        <div class="metric-chip">
+          <span class="metric-label">Bloques</span>
+          <span class="metric-value mono" id="metricBlocks">0</span>
+          <span class="metric-sub mono" id="metricCompleted">(0 completados)</span>
+        </div>
+        <div class="metric-divider"></div>
+        <div class="metric-chip">
+          <span class="metric-label">Planificado</span>
+          <span class="metric-value mono" id="metricPlanned">0m</span>
+        </div>
+        <div class="metric-divider"></div>
+        <div class="metric-chip">
+          <span class="metric-label">Libre en jornada</span>
+          <span class="metric-value mono metric-free" id="metricFree">0m</span>
+        </div>
+        <div class="metric-divider" id="metricHolidayDivider" hidden></div>
+        <div class="metric-chip" id="metricHolidayChip" hidden>
+          <span class="metric-label">Feriados semana</span>
+          <span class="metric-value mono metric-holiday" id="metricHolidays">0</span>
+        </div>
+      </div>
+
+      <div class="category-legend" aria-label="Categorías">
+        <span class="legend-item"><i style="--dot:#0067C0"></i>Profundo</span>
+        <span class="legend-item"><i style="--dot:#4F6BED"></i>Trabajo</span>
+        <span class="legend-item"><i style="--dot:#CA5010"></i>Reunión</span>
+        <span class="legend-item"><i style="--dot:#008575"></i>Personal</span>
+        <span class="legend-item"><i style="--dot:#107C10"></i>Salud</span>
+        <span class="legend-item"><i style="--dot:#8764B8"></i>Estudio</span>
+      </div>
+    </section>
+
+    <!-- Tira de días para vista móvil (<= 768px) -->
+    <nav class="mobile-day-strip" id="mobileDayStrip" aria-label="Selector diario móvil"></nav>
+
+    <!-- Área principal: Grilla + Panel lateral -->
+    <main class="workspace" id="workspace">
+      <section class="schedule-panel" aria-label="Grilla semanal de horarios">
+        <div class="grid-headers" id="gridHeaders"></div>
+        <div class="grid-scroll-area" id="gridScrollArea">
+          <div class="grid-canvas" id="gridCanvas">
+            <div class="time-axis" id="timeAxis" aria-hidden="true"></div>
+            <div class="day-columns" id="dayColumns"></div>
+          </div>
+        </div>
+      </section>
+
+      <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+      <aside class="sidebar" id="sidebar" aria-label="Objetivos y notas semanales">
+        <div class="sidebar-header">
+          <div class="sidebar-title-group">
+            <h2 class="sidebar-heading">Enfoque semanal</h2>
+            <span class="iso-pill mono" id="sidebarWeekCode">2026-W01</span>
+          </div>
+          <button type="button" class="btn btn-icon sidebar-close-mobile" id="sidebarCloseMobile" aria-label="Cerrar panel">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+
+        <!-- Objetivos semanales -->
+        <section class="sidebar-card goals-card" aria-labelledby="goalsHeading">
+          <div class="card-header">
+            <h3 id="goalsHeading" class="card-title">Objetivos semanales</h3>
+            <span class="counter-badge mono" id="goalsCounter">0/0</span>
+          </div>
+
+          <form class="goal-form" id="goalForm">
+            <input type="text" id="goalInput" class="fluent-input" placeholder="Añadir objetivo prioritario..." maxlength="140" autocomplete="off" required>
+            <button type="submit" class="btn btn-accent btn-icon" title="Añadir objetivo" aria-label="Añadir objetivo">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+          </form>
+
+          <ul class="goals-list" id="goalsList"></ul>
+        </section>
+
+        <!-- Notas de la semana -->
+        <section class="sidebar-card notes-card" aria-labelledby="notesHeading">
+          <div class="card-header">
+            <h3 id="notesHeading" class="card-title">Notas de la semana</h3>
+            <span class="save-status mono" id="notesSaveStatus">Sin cambios</span>
+          </div>
+          <textarea id="weeklyNotesInput" class="fluent-textarea" placeholder="Ideas clave, bloqueos, recordatorios o retrospectiva de esta semana..."></textarea>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <!-- Modal ContentDialog: Crear / Editar Bloque Horario -->
+  <div class="dialog-backdrop" id="taskModal" role="dialog" aria-modal="true" aria-labelledby="taskModalTitle" hidden>
+    <div class="fluent-dialog">
+      <div class="dialog-header">
+        <h2 class="dialog-title" id="taskModalTitle">Nuevo bloque horario</h2>
+        <button type="button" class="btn btn-icon" id="closeTaskModalBtn" aria-label="Cerrar diálogo">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+
+      <form id="taskForm" class="dialog-body">
+        <input type="hidden" id="taskIdInput">
+
+        <div class="form-field">
+          <label for="taskTitleInput" class="field-label">Título de la actividad</label>
+          <input type="text" id="taskTitleInput" class="fluent-input" placeholder="Ej. Diseño de arquitectura frontend" maxlength="120" required>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-field">
+            <label for="taskDateInput" class="field-label">Fecha</label>
+            <input type="date" id="taskDateInput" class="fluent-input mono" required>
+          </div>
+          <div class="form-field">
+            <label for="taskCategorySelect" class="field-label">Categoría</label>
+            <select id="taskCategorySelect" class="fluent-select">
+              <option value="profundo">Trabajo profundo</option>
+              <option value="trabajo">Trabajo / Proyecto</option>
+              <option value="reunion">Reunión</option>
+              <option value="personal">Personal</option>
+              <option value="salud">Salud / Ejercicio</option>
+              <option value="estudio">Estudio</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Selector de color Fluent -->
+        <div class="form-field">
+          <div class="field-label-row">
+            <label class="field-label">Color de la actividad</label>
+            <span class="hex-readout mono" id="taskColorHex">#0067C0</span>
+          </div>
+          <div class="color-picker-row">
+            <div class="swatch-list" id="colorSwatches" role="radiogroup" aria-label="Paleta Fluent"></div>
+            <label class="custom-color-btn" title="Elegir color personalizado">
+              <input type="color" id="taskCustomColorInput" value="#0067C0" aria-label="Color personalizado">
+              <span>Libre</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Horario y duración -->
+        <div class="form-row-2">
+          <div class="form-field">
+            <label for="taskStartInput" class="field-label">Hora de inicio</label>
+            <input type="time" id="taskStartInput" class="fluent-input mono" step="300" required>
+          </div>
+          <div class="form-field">
+            <div class="field-label-row">
+              <label for="taskEndInput" class="field-label">Hora de fin</label>
+              <span class="duration-pill mono" id="taskDurationPreview">1h</span>
+            </div>
+            <input type="time" id="taskEndInput" class="fluent-input mono" step="300" required>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <span class="field-label">Duración rápida</span>
+          <div class="duration-chips" id="durationChips">
+            <button type="button" class="chip-btn mono" data-mins="30">30m</button>
+            <button type="button" class="chip-btn mono" data-mins="45">45m</button>
+            <button type="button" class="chip-btn mono" data-mins="60">1h</button>
+            <button type="button" class="chip-btn mono" data-mins="90">1h 30m</button>
+            <button type="button" class="chip-btn mono" data-mins="120">2h</button>
+          </div>
+        </div>
+
+        <label class="fluent-checkbox-wrap">
+          <input type="checkbox" id="taskCompletedInput" class="fluent-checkbox">
+          <span>Marcar bloque como completado</span>
+        </label>
+
+        <div class="dialog-error" id="taskFormError" hidden></div>
+
+        <div class="dialog-footer">
+          <div class="dialog-footer-left">
+            <button type="button" class="btn btn-danger" id="deleteTaskBtn" hidden>Eliminar</button>
+            <button type="button" class="btn btn-subtle" id="openDupFromModalBtn" hidden>Duplicar</button>
+          </div>
+          <div class="dialog-footer-right">
+            <button type="button" class="btn btn-subtle" id="cancelTaskModalBtn">Cancelar</button>
+            <button type="submit" class="btn btn-accent">Guardar</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal ContentDialog: Duplicación Inteligente -->
+  <div class="dialog-backdrop" id="dupModal" role="dialog" aria-modal="true" aria-labelledby="dupModalTitle" hidden>
+    <div class="fluent-dialog fluent-dialog-wide">
+      <div class="dialog-header">
+        <h2 class="dialog-title" id="dupModalTitle">Duplicación inteligente</h2>
+        <button type="button" class="btn btn-icon" id="closeDupModalBtn" aria-label="Cerrar diálogo de duplicación">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+
+      <form id="dupForm" class="dialog-body">
+        <div class="dup-source-banner" id="dupSourceBanner"></div>
+
+        <div class="form-field">
+          <label class="field-label">Modo de repetición</label>
+          <div class="dup-modes-grid" role="radiogroup" aria-label="Modos de duplicación">
+            <label class="mode-card">
+              <input type="radio" name="dupMode" value="weekDays" checked>
+              <span class="mode-title">Días seleccionados</span>
+              <span class="mode-desc">Dentro de la misma semana</span>
+            </label>
+            <label class="mode-card">
+              <input type="radio" name="dupMode" value="nextWeeks">
+              <span class="mode-title">Semanas siguientes</span>
+              <span class="mode-desc">1 a 104 semanas consecutivas</span>
+            </label>
+            <label class="mode-card">
+              <input type="radio" name="dupMode" value="restOfYear">
+              <span class="mode-title">Resto del año</span>
+              <span class="mode-desc">Mismo día hasta el 31 de dic</span>
+            </label>
+            <label class="mode-card">
+              <input type="radio" name="dupMode" value="customRange">
+              <span class="mode-title">Periodo personalizado</span>
+              <span class="mode-desc">Rango de fechas y días</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Panel Modo 1: Días seleccionados de la misma semana -->
+        <div class="dup-mode-panel" id="dupPanelWeekDays">
+          <span class="field-label">Seleccioná los días de esa semana</span>
+          <div class="weekday-pills" id="dupWeekDaysSelector"></div>
+        </div>
+
+        <!-- Panel Modo 2: Semanas siguientes -->
+        <div class="dup-mode-panel" id="dupPanelNextWeeks" hidden>
+          <div class="form-field">
+            <label for="dupWeeksCountInput" class="field-label">Cantidad de semanas siguientes (1 – 104)</label>
+            <div class="weeks-count-row">
+              <input type="number" id="dupWeeksCountInput" class="fluent-input mono" min="1" max="104" value="4">
+              <div class="duration-chips" id="quickWeeksChips">
+                <button type="button" class="chip-btn mono" data-weeks="1">1 sem</button>
+                <button type="button" class="chip-btn mono" data-weeks="2">2 sem</button>
+                <button type="button" class="chip-btn mono" data-weeks="4">4 sem</button>
+                <button type="button" class="chip-btn mono" data-weeks="12">12 sem</button>
+                <button type="button" class="chip-btn mono" data-weeks="26">26 sem</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel Modo 3: Resto del año -->
+        <div class="dup-mode-panel" id="dupPanelRestOfYear" hidden>
+          <p class="helper-text" id="restOfYearHint">Se replicará cada semana en el mismo día hasta el 31 de diciembre.</p>
+        </div>
+
+        <!-- Panel Modo 4: Periodo personalizado -->
+        <div class="dup-mode-panel" id="dupPanelCustomRange" hidden>
+          <div class="form-row-2">
+            <div class="form-field">
+              <label for="dupRangeStartInput" class="field-label">Fecha de inicio</label>
+              <input type="date" id="dupRangeStartInput" class="fluent-input mono">
+            </div>
+            <div class="form-field">
+              <label for="dupRangeEndInput" class="field-label">Fecha de fin</label>
+              <input type="date" id="dupRangeEndInput" class="fluent-input mono">
+            </div>
+          </div>
+          <div class="form-field">
+            <span class="field-label">Días de la semana a incluir</span>
+            <div class="weekday-pills" id="dupCustomDaysSelector"></div>
+          </div>
+        </div>
+
+        <!-- Opciones adicionales -->
+        <div class="dup-options">
+          <label class="fluent-checkbox-wrap">
+            <input type="checkbox" id="dupSkipIdentical" class="fluent-checkbox" checked>
+            <span>Omitir si ya existe un bloque idéntico (fecha, horario y título)</span>
+          </label>
+          <label class="fluent-checkbox-wrap">
+            <input type="checkbox" id="dupAsPending" class="fluent-checkbox" checked>
+            <span>Crear todas las copias como pendientes</span>
+          </label>
+        </div>
+
+        <!-- Vista previa dinámica -->
+        <div class="dup-preview-box" id="dupPreviewBox" aria-live="polite"></div>
+
+        <div class="dialog-footer">
+          <div class="dialog-footer-left"></div>
+          <div class="dialog-footer-right">
+            <button type="button" class="btn btn-subtle" id="cancelDupModalBtn">Cancelar</button>
+            <button type="submit" class="btn btn-accent" id="confirmDupBtn">Duplicar</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Notificaciones Toast -->
+  <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+  <script src="./app.js"></script>
+</body>
+</html>

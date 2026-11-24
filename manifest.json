@@ -1,0 +1,27 @@
+{
+  "name": "Planificador Semanal — Fluent",
+  "short_name": "Planificador",
+  "description": "Planificador semanal digital interactivo 100 % offline con estética Windows 11 Fluent Design, detección automática de huecos libres y respaldo JSON.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#F3F3F3",
+  "theme_color": "#0067C0",
+  "lang": "es",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%230067C0'/%3E%3Crect x='96' y='128' width='320' height='288' rx='44' fill='%23FFFFFF' fill-opacity='0.96'/%3E%3Crect x='96' y='128' width='320' height='76' rx='44' fill='%23005A9E'/%3E%3Crect x='144' y='244' width='96' height='40' rx='14' fill='%230067C0'/%3E%3Crect x='272' y='244' width='96' height='40' rx='14' fill='%23008575'/%3E%3Crect x='144' y='316' width='152' height='40' rx='14' fill='%23CA5010'/%3E%3C/svg%3E",
+      "sizes": "192x192 512x512 any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%230067C0'/%3E%3Crect x='112' y='136' width='288' height='256' rx='36' fill='%23FFFFFF' fill-opacity='0.96'/%3E%3Crect x='112' y='136' width='288' height='68' rx='36' fill='%23005A9E'/%3E%3Crect x='156' y='236' width='84' height='36' rx='12' fill='%230067C0'/%3E%3Crect x='272' y='236' width='84' height='36' rx='12' fill='%23008575'/%3E%3Crect x='156' y='300' width='136' height='36' rx='12' fill='%23CA5010'/%3E%3C/svg%3E",
+      "sizes": "512x512 any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
